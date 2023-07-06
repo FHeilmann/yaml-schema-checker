@@ -48,6 +48,10 @@ This project uses [glob](https://www.npmjs.com/package/glob) to read files
 
 **Optional** Separator used to split the files input. Default is `,` (comma).
 
+### `enableGithubStepSummary`
+
+**Optional** Enable writing the output to the GitHub step summary for easier viewing.
+
 ## Outputs
 
 ### `validFiles`
