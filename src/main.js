@@ -18,6 +18,7 @@ async function run() {
         const inputYamlFiles = ActionUtils.getInputAsArray("yamlFiles", { required: true });
         const inputFilesSeparator = ActionUtils.getInput("filesSeparator", { required: false });
         const enableGithubStepSummary = ActionUtils.getInput("enableGithubStepSummary", {required: false });
+        const stripContentFromPath = ActionUtils.getInput("stripContentFromPath", {required: false });
 
         if (StringUtils.isBlank(inputJsonSchemaFile)) {
             throw new Error("The 'jsonSchemaFile' parameter should not be blank");
@@ -53,15 +54,21 @@ async function run() {
 
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
 
+            if (stripContentFromPath == "") {
+                summary_file_info["file"] = `${file}`
+            } else {
+                summary_file_info["file"] = `${file}`.replace(stripContentFromPath, '')
+            }
+
             if (result.errors.length === 0) {
                 summary_file_info["result"] = "✅";
-                summary_file_info["errors"] = "";
-                core.info(`✅ ${file}`);
+                summary_file_info["errors"] = "<ul><li>None</li></ul>";
 
+                core.info(`✅ ${summary_file_info["file"]}`);
                 validFiles.push(file);
             } else {
                 summary_file_info["result"] = "❌";
-                core.info(`❌ ${file}`);
+                core.info(`❌ ${summary_file_info["file"]}`);
 
                 invalidFiles.push(file);
                 summary_file_info["errors"] = "<ul>";
@@ -71,7 +78,7 @@ async function run() {
                 });
                 summary_file_info["errors"] += "</ul>";
             }
-            stepSummaryTable.push([`${file}`, summary_file_info["result"], summary_file_info["errors"]]);
+            stepSummaryTable.push([summary_file_info["file"], summary_file_info["result"], summary_file_info["errors"]]);
         });
 
         if (enableGithubStepSummary == "true") {
