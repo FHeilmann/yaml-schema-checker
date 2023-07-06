@@ -44,7 +44,7 @@ async function run() {
         let invalidFiles = [];
         let stepSummaryTable = [];
 
-        stepSummaryTable.push([{data: "File", header: true}, {data: "Result", header: true}, {errors: "Details", header: true}]);
+        stepSummaryTable.push([{data: "File", header: true}, {data: "Result", header: true}, {data: "Details", header: true}]);
 
         files.forEach(file => {
             var summary_file_info = {};
