@@ -14,6 +14,10 @@ inputs:
     description: "Separator used to split the files input"
     default: ","
     required: false
+  enableGithubStepSummary:
+    description: "Enable writing the output to the GitHub step summary for easier viewing"
+    default: false
+    required: false
 outputs:
   validFiles:
     description: Comma separated list of files that passed
