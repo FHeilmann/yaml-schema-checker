@@ -16722,7 +16722,7 @@ async function run() {
         let invalidFiles = [];
         let stepSummaryTable = [];
 
-        stepSummaryTable.push([{data: "File", header: true}, {data: "Result", header: true}, {errors: "Errors", header: true}]);
+        stepSummaryTable.push([{data: "File", header: true}, {data: "Result", header: true}, {errors: "Details", header: true}]);
 
         files.forEach(file => {
             var summary_file_info = {};
@@ -16740,7 +16740,7 @@ async function run() {
 
             if (result.errors.length === 0) {
                 summary_file_info["result"] = "✅";
-                summary_file_info["errors"] = "<ul><li>None</li></ul>";
+                summary_file_info["errors"] = "<ul><li>Validation success!</li></ul>";
 
                 core.info(`✅ ${summary_file_info["file"]}`);
                 validFiles.push(file);
