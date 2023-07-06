@@ -55,9 +55,9 @@ async function run() {
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
 
             if (stripContentFromPath == "") {
-                summary_file_info["file"] = `${file}`
+                summary_file_info["file"] = `${file}`;
             } else {
-                summary_file_info["file"] = `${file}`.replace(stripContentFromPath, '')
+                summary_file_info["file"] = `${file}`.replace(stripContentFromPath, "");
             }
 
             if (result.errors.length === 0) {
