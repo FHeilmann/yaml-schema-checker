@@ -16731,7 +16731,7 @@ async function run() {
             var summary_file_info = {};
             core.debug(`Processing: ${file}`);
 
-            const yamlContentAsJson = FileUtils.getContentFromYaml(path.join(yamlWorkingDirectory, file), yamlWorkingDirectory);
+            const yamlContentAsJson = FileUtils.getContentFromYaml(path.join(yamlWorkingDirectory, file));
 
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
 
