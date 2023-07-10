@@ -16739,11 +16739,11 @@ async function run() {
                 summary_file_info["result"] = "✅";
                 summary_file_info["errors"] = "<ul><li>Validation success!</li></ul>";
 
-                core.info(`✅ ${summary_file_info["file"]}`);
+                core.info(`✅ ${file}`);
                 validFiles.push(file);
             } else {
                 summary_file_info["result"] = "❌";
-                core.info(`❌ ${summary_file_info["file"]}`);
+                core.info(`❌ ${file}`);
 
                 invalidFiles.push(file);
                 summary_file_info["errors"] = "<ul>";
