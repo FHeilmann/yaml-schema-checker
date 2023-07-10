@@ -18,8 +18,8 @@ inputs:
     description: "Enable writing the output to the GitHub step summary for easier viewing"
     default: false
     required: false
-  stripContentFromPath:
-    description: "Remove the provided string from any path outputs (useful for shortening long paths in the log and summary)"
+  yamlWorkingDirectory:
+    description: "Base path for the file search"
     default: ""
     required: false
 outputs:
