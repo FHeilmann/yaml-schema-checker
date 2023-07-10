@@ -9687,7 +9687,6 @@ module.exports = ArrayUtils;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__(7147);
-const path = __nccwpck_require__(1017);
 const process = __nccwpck_require__(7282);
 const { glob } = __nccwpck_require__(3277);
 const StringUtils = __nccwpck_require__(3222);
@@ -9710,7 +9709,7 @@ class FileUtils {
         return fs.existsSync(fileOrPath);
     }
 
-    static loadFiles(array) {
+    static loadFiles(array, workingDirectory) {
 
         core.debug("Loading all files");
 
@@ -9720,7 +9719,7 @@ class FileUtils {
 
             core.debug(`Processing: ${el}`);
 
-            FileUtils.searchFiles(el).forEach(file => {
+            FileUtils.searchFiles(el, workingDirectory).forEach(file => {
 
                 core.debug(`Adding file: ${file}`);
 
@@ -9731,10 +9730,10 @@ class FileUtils {
         return files;
     }
 
-    static searchFiles(pattern) {
+    static searchFiles(pattern, workingDirectory) {
 
         const options = {
-            cwd: FileUtils.getWorkspacePath()
+            cwd: workingDirectory
         };
 
         return glob.sync(pattern, options);
@@ -9751,9 +9750,8 @@ class FileUtils {
 
     static getContent(file, encoding = "utf-8") {
 
-        const filePath = path.join(FileUtils.getWorkspacePath(), file);
 
-        return fs.readFileSync(filePath, { encoding });
+        return fs.readFileSync(file, { encoding });
     }
 
     static getContentFromJson(file, encoding = "utf-8") {
@@ -16677,6 +16675,7 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(2186);
+const path = __nccwpck_require__(1017);
 
 const FileUtils = __nccwpck_require__(550);
 const StringUtils = __nccwpck_require__(3222);
@@ -16695,8 +16694,8 @@ async function run() {
         const inputJsonSchemaFile = ActionUtils.getInput("jsonSchemaFile", { required: true });
         const inputYamlFiles = ActionUtils.getInputAsArray("yamlFiles", { required: true });
         const inputFilesSeparator = ActionUtils.getInput("filesSeparator", { required: false });
-        const enableGithubStepSummary = ActionUtils.getInput("enableGithubStepSummary", {required: false });
-        const stripContentFromPath = ActionUtils.getInput("stripContentFromPath", {required: false });
+        const enableGithubStepSummary = ActionUtils.getInput("enableGithubStepSummary", {required: false});
+        let yamlWorkingDirectory = ActionUtils.getInput("yamlWorkingDirectory", {required: false });
 
         if (StringUtils.isBlank(inputJsonSchemaFile)) {
             throw new Error("The 'jsonSchemaFile' parameter should not be blank");
@@ -16710,11 +16709,15 @@ async function run() {
             throw new Error("The 'yamlFiles' parameter should not be blank");
         }
 
+        if (StringUtils.isBlank(yamlWorkingDirectory)) {
+            yamlWorkingDirectory = FileUtils.getWorkspacePath();
+        }
+
         const yamlFiles = ArrayUtils.split(inputYamlFiles, inputFilesSeparator);
 
         const schemaContentAsJson = FileUtils.getContentFromJson(inputJsonSchemaFile);
 
-        const files = FileUtils.loadFiles(yamlFiles);
+        const files = FileUtils.loadFiles(yamlFiles, yamlWorkingDirectory);
 
         core.info(`Found ${files.size} file(s). Checking them:`);
 
@@ -16728,15 +16731,9 @@ async function run() {
             var summary_file_info = {};
             core.debug(`Processing: ${file}`);
 
-            const yamlContentAsJson = FileUtils.getContentFromYaml(file);
+            const yamlContentAsJson = FileUtils.getContentFromYaml(path.join(yamlWorkingDirectory, file), yamlWorkingDirectory);
 
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
-
-            if (stripContentFromPath == "") {
-                summary_file_info["file"] = `${file}`;
-            } else {
-                summary_file_info["file"] = `${file}`.replace(stripContentFromPath, "");
-            }
 
             if (result.errors.length === 0) {
                 summary_file_info["result"] = "✅";
@@ -16756,7 +16753,7 @@ async function run() {
                 });
                 summary_file_info["errors"] += "</ul>";
             }
-            stepSummaryTable.push([summary_file_info["file"], summary_file_info["result"], summary_file_info["errors"]]);
+            stepSummaryTable.push([`${file}`, summary_file_info["result"], summary_file_info["errors"]]);
         });
 
         if (enableGithubStepSummary == "true") {

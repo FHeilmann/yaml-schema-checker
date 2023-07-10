@@ -1,5 +1,4 @@
 const fs = require("fs");
-const path = require("path");
 const process = require("process");
 const { glob } = require("glob");
 const StringUtils = require("./string-utils");
@@ -22,7 +21,7 @@ class FileUtils {
         return fs.existsSync(fileOrPath);
     }
 
-    static loadFiles(array) {
+    static loadFiles(array, workingDirectory) {
 
         core.debug("Loading all files");
 
@@ -32,7 +31,7 @@ class FileUtils {
 
             core.debug(`Processing: ${el}`);
 
-            FileUtils.searchFiles(el).forEach(file => {
+            FileUtils.searchFiles(el, workingDirectory).forEach(file => {
 
                 core.debug(`Adding file: ${file}`);
 
@@ -43,10 +42,10 @@ class FileUtils {
         return files;
     }
 
-    static searchFiles(pattern) {
+    static searchFiles(pattern, workingDirectory) {
 
         const options = {
-            cwd: FileUtils.getWorkspacePath()
+            cwd: workingDirectory
         };
 
         return glob.sync(pattern, options);
@@ -63,9 +62,8 @@ class FileUtils {
 
     static getContent(file, encoding = "utf-8") {
 
-        const filePath = path.join(FileUtils.getWorkspacePath(), file);
 
-        return fs.readFileSync(filePath, { encoding });
+        return fs.readFileSync(file, { encoding });
     }
 
     static getContentFromJson(file, encoding = "utf-8") {

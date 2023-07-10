@@ -1,4 +1,5 @@
 const core = require("@actions/core");
+const path = require("path");
 
 const FileUtils = require("./utils/file-utils");
 const StringUtils = require("./utils/string-utils");
@@ -17,8 +18,8 @@ async function run() {
         const inputJsonSchemaFile = ActionUtils.getInput("jsonSchemaFile", { required: true });
         const inputYamlFiles = ActionUtils.getInputAsArray("yamlFiles", { required: true });
         const inputFilesSeparator = ActionUtils.getInput("filesSeparator", { required: false });
-        const enableGithubStepSummary = ActionUtils.getInput("enableGithubStepSummary", {required: false });
-        const stripContentFromPath = ActionUtils.getInput("stripContentFromPath", {required: false });
+        const enableGithubStepSummary = ActionUtils.getInput("enableGithubStepSummary", {required: false});
+        let yamlWorkingDirectory = ActionUtils.getInput("yamlWorkingDirectory", {required: false });
 
         if (StringUtils.isBlank(inputJsonSchemaFile)) {
             throw new Error("The 'jsonSchemaFile' parameter should not be blank");
@@ -32,11 +33,15 @@ async function run() {
             throw new Error("The 'yamlFiles' parameter should not be blank");
         }
 
+        if (StringUtils.isBlank(yamlWorkingDirectory)) {
+            yamlWorkingDirectory = FileUtils.getWorkspacePath();
+        }
+
         const yamlFiles = ArrayUtils.split(inputYamlFiles, inputFilesSeparator);
 
         const schemaContentAsJson = FileUtils.getContentFromJson(inputJsonSchemaFile);
 
-        const files = FileUtils.loadFiles(yamlFiles);
+        const files = FileUtils.loadFiles(yamlFiles, yamlWorkingDirectory);
 
         core.info(`Found ${files.size} file(s). Checking them:`);
 
@@ -50,15 +55,9 @@ async function run() {
             var summary_file_info = {};
             core.debug(`Processing: ${file}`);
 
-            const yamlContentAsJson = FileUtils.getContentFromYaml(file);
+            const yamlContentAsJson = FileUtils.getContentFromYaml(path.join(yamlWorkingDirectory, file));
 
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
-
-            if (stripContentFromPath == "") {
-                summary_file_info["file"] = `${file}`;
-            } else {
-                summary_file_info["file"] = `${file}`.replace(stripContentFromPath, "");
-            }
 
             if (result.errors.length === 0) {
                 summary_file_info["result"] = "✅";
@@ -78,7 +77,7 @@ async function run() {
                 });
                 summary_file_info["errors"] += "</ul>";
             }
-            stepSummaryTable.push([summary_file_info["file"], summary_file_info["result"], summary_file_info["errors"]]);
+            stepSummaryTable.push([`${file}`, summary_file_info["result"], summary_file_info["errors"]]);
         });
 
         if (enableGithubStepSummary == "true") {
