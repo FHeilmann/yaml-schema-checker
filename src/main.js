@@ -1,6 +1,4 @@
 const core = require("@actions/core");
-const path = require("path");
-
 const FileUtils = require("./utils/file-utils");
 const StringUtils = require("./utils/string-utils");
 const SchemaUtils = require("./utils/schema-utils");
@@ -55,32 +53,31 @@ async function run() {
             var summary_file_info = {};
             core.debug(`Processing: ${file}`);
 
-            const yamlContentAsJson = FileUtils.getContentFromYaml(path.join(yamlWorkingDirectory, file));
+            const yamlContentAsJson = FileUtils.getContentFromYaml(file, yamlWorkingDirectory);
 
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
 
             if (result.errors.length === 0) {
                 summary_file_info["result"] = "✅";
-                summary_file_info["errors"] = "<ul><li>Validation success!</li></ul>";
+                summary_file_info["details"] = "<li>No errors!</li>";
 
                 core.info(`✅ ${file}`);
                 validFiles.push(file);
             } else {
                 summary_file_info["result"] = "❌";
-                core.info(`❌ ${file}`);
-
-                invalidFiles.push(file);
-                summary_file_info["errors"] = "<ul>";
+                summary_file_info["details"] = "";
                 result.errors.forEach(error => {
-                    summary_file_info["errors"] += `<li>${error.stack}</li>`;
+                    summary_file_info["details"] += `<li>${error.stack}</li>`;
                     core.info(`    - ${error.stack}`);
                 });
-                summary_file_info["errors"] += "</ul>";
+
+                core.info(`❌ ${file}`);
+                invalidFiles.push(file);
             }
-            stepSummaryTable.push([`${file}`, summary_file_info["result"], summary_file_info["errors"]]);
+            stepSummaryTable.push([`${file}`, "<ul>" + summary_file_info["result"] + "</ul>", summary_file_info["details"]]);
         });
 
-        if (enableGithubStepSummary == "true") {
+        if ((enableGithubStepSummary == "true") && (files.length > 0)) {
             core.summary.addHeading("YAML Validation Results").addTable(stepSummaryTable).write();
         }
 
@@ -91,7 +88,7 @@ async function run() {
         core.setOutput("invalidFiles", invalidFiles.join(","));
 
         if (invalidFiles.length !== 0) {
-            throw new Error(`It was found ${invalidFiles.length} invalid file(s)`);
+            throw new Error(`Validation found ${invalidFiles.length} invalid file(s)!`);
         }
     } catch (error) {
         core.setFailed(error.message);

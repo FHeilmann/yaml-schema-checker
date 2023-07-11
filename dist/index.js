@@ -9687,6 +9687,7 @@ module.exports = ArrayUtils;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__(7147);
+const path = __nccwpck_require__(1017);
 const process = __nccwpck_require__(7282);
 const { glob } = __nccwpck_require__(3277);
 const StringUtils = __nccwpck_require__(3222);
@@ -9754,16 +9755,16 @@ class FileUtils {
         return fs.readFileSync(file, { encoding });
     }
 
-    static getContentFromJson(file, encoding = "utf-8") {
-
-        const content = FileUtils.getContent(file, encoding);
+    static getContentFromJson(file, workingDirectory = "", encoding = "utf-8") {
+        const fullPath = (workingDirectory === "") ? file : path.join(workingDirectory, file);
+        const content = FileUtils.getContent(fullPath, encoding);
 
         return StringUtils.parseJson(file, content);
     }
 
-    static getContentFromYaml(file, encoding = "utf-8") {
-
-        const content = FileUtils.getContent(file, encoding);
+    static getContentFromYaml(file, workingDirectory = "", encoding = "utf-8") {
+        const fullPath = (workingDirectory === "") ? file : path.join(workingDirectory, file);
+        const content = FileUtils.getContent(fullPath, encoding);
 
         return StringUtils.parseYaml(file, content);
     }
@@ -16675,8 +16676,6 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(2186);
-const path = __nccwpck_require__(1017);
-
 const FileUtils = __nccwpck_require__(550);
 const StringUtils = __nccwpck_require__(3222);
 const SchemaUtils = __nccwpck_require__(8713);
@@ -16731,32 +16730,31 @@ async function run() {
             var summary_file_info = {};
             core.debug(`Processing: ${file}`);
 
-            const yamlContentAsJson = FileUtils.getContentFromYaml(path.join(yamlWorkingDirectory, file));
+            const yamlContentAsJson = FileUtils.getContentFromYaml(file, yamlWorkingDirectory);
 
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
 
             if (result.errors.length === 0) {
                 summary_file_info["result"] = "✅";
-                summary_file_info["errors"] = "<ul><li>Validation success!</li></ul>";
+                summary_file_info["details"] = "<li>No errors!</li>";
 
                 core.info(`✅ ${file}`);
                 validFiles.push(file);
             } else {
                 summary_file_info["result"] = "❌";
-                core.info(`❌ ${file}`);
-
-                invalidFiles.push(file);
-                summary_file_info["errors"] = "<ul>";
+                summary_file_info["details"] = "";
                 result.errors.forEach(error => {
-                    summary_file_info["errors"] += `<li>${error.stack}</li>`;
+                    summary_file_info["details"] += `<li>${error.stack}</li>`;
                     core.info(`    - ${error.stack}`);
                 });
-                summary_file_info["errors"] += "</ul>";
+
+                core.info(`❌ ${file}`);
+                invalidFiles.push(file);
             }
-            stepSummaryTable.push([`${file}`, summary_file_info["result"], summary_file_info["errors"]]);
+            stepSummaryTable.push([`${file}`, "<ul>" + summary_file_info["result"] + "</ul>", summary_file_info["details"]]);
         });
 
-        if (enableGithubStepSummary == "true") {
+        if ((enableGithubStepSummary == "true") && (files.length > 0)) {
             core.summary.addHeading("YAML Validation Results").addTable(stepSummaryTable).write();
         }
 
@@ -16767,7 +16765,7 @@ async function run() {
         core.setOutput("invalidFiles", invalidFiles.join(","));
 
         if (invalidFiles.length !== 0) {
-            throw new Error(`It was found ${invalidFiles.length} invalid file(s)`);
+            throw new Error(`Validation found ${invalidFiles.length} invalid file(s)!`);
         }
     } catch (error) {
         core.setFailed(error.message);

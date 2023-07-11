@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const process = require("process");
 const { glob } = require("glob");
 const StringUtils = require("./string-utils");
@@ -66,16 +67,16 @@ class FileUtils {
         return fs.readFileSync(file, { encoding });
     }
 
-    static getContentFromJson(file, encoding = "utf-8") {
-
-        const content = FileUtils.getContent(file, encoding);
+    static getContentFromJson(file, workingDirectory = "", encoding = "utf-8") {
+        const fullPath = (workingDirectory === "") ? file : path.join(workingDirectory, file);
+        const content = FileUtils.getContent(fullPath, encoding);
 
         return StringUtils.parseJson(file, content);
     }
 
-    static getContentFromYaml(file, encoding = "utf-8") {
-
-        const content = FileUtils.getContent(file, encoding);
+    static getContentFromYaml(file, workingDirectory = "", encoding = "utf-8") {
+        const fullPath = (workingDirectory === "") ? file : path.join(workingDirectory, file);
+        const content = FileUtils.getContent(fullPath, encoding);
 
         return StringUtils.parseYaml(file, content);
     }
