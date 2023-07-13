@@ -77,7 +77,7 @@ async function run() {
             stepSummaryTable.push([`${file}`, "<ul>" + summary_file_info["result"] + "</ul>", summary_file_info["details"]]);
         });
         core.info(`${enableGithubStepSummary}, ${files.length}`);
-        if ((enableGithubStepSummary == "true") && (files.length > 0)) {
+        if ((enableGithubStepSummary == "true") && (files.size > 0)) {
             core.summary.addHeading("YAML Validation Results").addTable(stepSummaryTable).write();
         }
 
