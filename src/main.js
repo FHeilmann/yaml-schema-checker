@@ -58,21 +58,22 @@ async function run() {
             const result = SchemaUtils.validate(schemaContentAsJson, yamlContentAsJson);
 
             if (result.errors.length === 0) {
+                core.info(`✅ ${file}`);
+                validFiles.push(file);
+
                 summary_file_info["result"] = "✅";
                 summary_file_info["details"] = "<li>No errors!</li>";
 
-                core.info(`✅ ${file}`);
-                validFiles.push(file);
             } else {
+                core.info(`❌ ${file}`);
+                invalidFiles.push(file);
+
                 summary_file_info["result"] = "❌";
                 summary_file_info["details"] = "";
                 result.errors.forEach(error => {
                     summary_file_info["details"] += `<li>${error.stack}</li>`;
                     core.info(`    - ${error.stack}`);
                 });
-
-                core.info(`❌ ${file}`);
-                invalidFiles.push(file);
             }
             stepSummaryTable.push([`${file}`, "<ul>" + summary_file_info["result"] + "</ul>", summary_file_info["details"]]);
         });
